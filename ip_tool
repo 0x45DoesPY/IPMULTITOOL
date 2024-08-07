@@ -3,7 +3,7 @@ import requests
 import socket
 import ssl
 import dns.resolver
-import pywhois as whois
+import whois  # Updated to use the correct `whois` library
 import string
 import hashlib
 import re
@@ -26,16 +26,16 @@ def get_hwid():
         return None
 
 # Define valid access keys and password history
-VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin'}
+VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin', 'Cortana.54': 'Midoriya'}
 HWID_DATABASE = {
     '0x45_1234': '28C94414-E468-8617-AA84-2CF05DD55C52',
-    'admin': 'YOUR_ACTUAL_HARDWARE_ID'  # Replace this with the actual HWID for 'admin'
+    'admin': 'YOUR_ACTUAL_HARDWARE_ID',  # Replace this with the actual HWID for 'admin'
+    'Cortana.54': 'F82A19C1-6C8A-B71B-A2EA-00D861FD8D65'
 }
 PASSWORD_HISTORY = set()
 
 def gradient_header():
     header = """
-
   /$$$$$$            /$$   /$$ /$$$$$$$        /$$$$$$$   /$$$$$$  /$$   /$$ /$$   /$$ /$$$$$$$$ /$$$$$$$ 
  /$$$_  $$          | $$  | $$| $$____/       | $$__  $$ /$$__  $$| $$  / $$| $$  / $$| $$_____/| $$__  $$
 | $$$$\ $$ /$$   /$$| $$  | $$| $$            | $$  \ $$| $$  \ $$|  $$/ $$/|  $$/ $$/| $$      | $$  \ $$
