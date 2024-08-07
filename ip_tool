@@ -1,0 +1,371 @@
+import subprocess
+import requests
+import socket
+import ssl
+import dns.resolver
+import whois
+import string
+import hashlib
+import re
+from random import choice
+from concurrent.futures import ThreadPoolExecutor
+from colorama import Fore, Style, init
+from termcolor import colored
+
+# Initialize colorama
+init()
+
+def get_hwid():
+    """Get a unique HWID based on the machine's hardware."""
+    try:
+        result = subprocess.check_output("wmic csproduct get uuid /value", shell=True, text=True)
+        hwid = result.split('=')[1].strip()
+        return hwid
+    except Exception as e:
+        print(f"Error retrieving HWID: {e}")
+        return None
+
+# Define valid access keys and password history
+VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin'}
+HWID_DATABASE = {
+    '0x45_1234': '28C94414-E468-8617-AA84-2CF05DD55C52',
+    'admin': 'YOUR_ACTUAL_HARDWARE_ID'  # Replace this with the actual HWID for 'admin'
+}
+PASSWORD_HISTORY = set()
+
+def gradient_header():
+    header = """
+  /$$$$$$            /$$   /$$ /$$$$$$$        /$$                           /$$
+ /$$$_  $$          | $$  | $$| $$____/       | $$                          | $$
+| $$$$\ $$ /$$   /$$| $$  | $$| $$            | $$        /$$$$$$   /$$$$$$ | $$   /$$ /$$   /$$  /$$$$$$    
+| $$ $$ $$|  $$ /$$/| $$  | $$| $$$$$$$       | $$       /$$__  $$ /$$__  $$| $$  /$$/| $$  | $$ /$$__  $$   
+| $$\ $$$$ \  $$$$/ |_____  $$|_____  $$      | $$      | $$  \ $$| $$  \ $$| $$$$$$/ | $$  | $$| $$  \ $$   
+| $$ \ $$$  >$$  $$      | $$ /$$  \ $$      | $$      | $$  | $$| $$  | $$| $$_  $$ | $$  | $$| $$  | $$   
+|  $$$$$$/ /$$/\  $$      | $$|  $$$$$$/      | $$$$$$$$|  $$$$$$/|  $$$$$$/| $$ \  $$|  $$$$$$/| $$$$$$$/   
+ \______/ |__/  \__/      |__/ \______/       |________/ \______/  \______/ |__/  \__/ \______/ | $$____/    
+                                                                                                | $$         
+                                                                                                | $$         
+                                                                                                |__/         
+    """
+    print(colored(header, 'cyan'))
+
+def gradient_menu(title, options):
+    print(colored(f"\n{title}", 'blue'))
+    for i, option in enumerate(options, start=1):
+        print(colored(f"{i}. {option}", 'yellow'))
+
+def pause():
+    input(colored("Press Enter to return to the menu...", 'green'))
+
+def check_key():
+    key = input("Enter your access key: ")
+    if key in VALID_KEYS:
+        hwid = get_hwid()
+        if hwid == HWID_DATABASE.get(key):
+            print(colored(f"Access granted. Welcome, {VALID_KEYS[key]}!", 'green'))
+            return True
+        else:
+            print(colored("Invalid HWID. Access denied.", 'red'))
+            return False
+    else:
+        print(colored("Invalid key. Access denied.", 'red'))
+        return False
+
+def advanced_ip_lookup():
+    ip = input("Enter IP Address: ")
+    try:
+        ip_api_response = requests.get(f'https://ipinfo.io/{ip}/json')
+        ip_api_data = ip_api_response.json()
+        
+        print(colored("Advanced IP Lookup Results:", 'cyan'))
+        print(f"IP: {ip_api_data.get('ip')}")
+        print(f"City: {ip_api_data.get('city')}")
+        print(f"Region: {ip_api_data.get('region')}")
+        print(f"Country: {ip_api_data.get('country')}")
+        print(f"Location: {ip_api_data.get('loc')}")
+        print(f"Organization: {ip_api_data.get('org')}")
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def ip_reputation_check():
+    ip = input("Enter IP Address: ")
+    try:
+        response = requests.get(f'https://ipapi.co/{ip}/json')
+        data = response.json()
+        
+        print(colored("IP Reputation Check:", 'cyan'))
+        print(f"IP: {data.get('ip')}")
+        print(f"Organization: {data.get('org')}")
+        print(f"ISP: {data.get('isp')}")
+        print(f"Country: {data.get('country_name')}")
+        print(f"Region: {data.get('region')}")
+        print(f"City: {data.get('city')}")
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def port_scanner():
+    ip = input("Enter IP Address: ")
+    def scan_port(port):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(1)
+            result = sock.connect_ex((ip, port))
+            return port if result == 0 else None
+    
+    ports = range(1, 1025)
+    open_ports = []
+    
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        results = executor.map(scan_port, ports)
+        open_ports = [port for port in results if port is not None]
+    
+    print(colored(f"Open Ports on {ip}:", 'cyan'))
+    if open_ports:
+        for port in open_ports:
+            print(f"  - Port {port}")
+    else:
+        print(colored("No open ports found.", 'yellow'))
+    pause()
+
+def ip_to_domain():
+    ip = input("Enter IP Address: ")
+    try:
+        domain = socket.gethostbyaddr(ip)[0]
+        print(colored(f"Domain Name for {ip}: {domain}", 'cyan'))
+    except socket.herror as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def reverse_ip_lookup():
+    ip = input("Enter IP Address: ")
+    try:
+        response = requests.get(f'https://api.hackertarget.com/reverseiplookup/?q={ip}')
+        result = response.text
+        print(colored("Reverse IP Lookup Results:", 'cyan'))
+        print(result)
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def mac_address_lookup():
+    mac = input("Enter MAC Address: ")
+    try:
+        response = requests.get(f'https://api.macvendors.com/{mac}')
+        print(colored(f"MAC Address Lookup Results for {mac}:", 'cyan'))
+        print(response.text)
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def password_generation():
+    length = int(input("Enter password length: "))
+    chars = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(choice(chars) for _ in range(length))
+    print(colored(f"Generated Password: {password}", 'cyan'))
+    pause()
+
+def password_breach_check():
+    password = input("Enter password to check: ")
+    sha1_password = hashlib.sha1(password.encode()).hexdigest()
+    response = requests.get(f'https://api.pwnedpasswords.com/range/{sha1_password[:5]}')
+    hashes = (line.split(':') for line in response.text.splitlines())
+    if any(sha1_password[5:].upper() == hash for hash, count in hashes):
+        print(colored("Password has been breached.", 'red'))
+    else:
+        print(colored("Password is safe.", 'green'))
+    pause()
+
+def password_history_check():
+    password = input("Enter password to check history: ")
+    if password in PASSWORD_HISTORY:
+        print(colored("Password found in history.", 'red'))
+    else:
+        print(colored("Password not found in history.", 'green'))
+        PASSWORD_HISTORY.add(password)
+    pause()
+
+def password_reuse_check():
+    password = input("Enter password to check reuse: ")
+    if password in PASSWORD_HISTORY:
+        print(colored("Password reused.", 'red'))
+    else:
+        print(colored("Password is unique.", 'green'))
+    pause()
+
+def password_strength_check():
+    password = input("Enter password to check strength: ")
+    if len(password) < 8:
+        strength = "Weak"
+    elif re.search(r"[A-Z]", password) and re.search(r"[a-z]", password) and re.search(r"\d", password):
+        strength = "Strong"
+    else:
+        strength = "Medium"
+    print(colored(f"Password strength: {strength}", 'cyan'))
+    pause()
+
+def domain_lookup():
+    domain = input("Enter domain name: ")
+    try:
+        domain_info = whois.whois(domain)
+        print(colored(f"Domain Lookup Results for {domain}:", 'cyan'))
+        print(f"Domain Name: {domain_info.domain_name}")
+        print(f"Registrar: {domain_info.registrar}")
+        print(f"Creation Date: {domain_info.creation_date}")
+        print(f"Expiration Date: {domain_info.expiration_date}")
+        print(f"Name Servers: {', '.join(domain_info.name_servers)}")
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def dns_record_lookup():
+    domain = input("Enter domain name: ")
+    try:
+        answers = dns.resolver.resolve(domain, 'A')
+        print(colored(f"DNS Records for {domain}:", 'cyan'))
+        for rdata in answers:
+            print(f"  - {rdata.to_text()}")
+    except dns.resolver.NoAnswer as e:
+        print(colored(f"No DNS record found: {e}", 'red'))
+    pause()
+
+def dns_zone_transfer():
+    domain = input("Enter domain name: ")
+    try:
+        ns_records = dns.resolver.resolve(domain, 'NS')
+        for ns in ns_records:
+            ns_ip = dns.resolver.resolve(ns.to_text(), 'A')[0].to_text()
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((ns_ip, 53))
+                s.send(b'\x00' * 12)  # Simplified DNS query (not a real one)
+                response = s.recv(4096)
+                print(colored(f"DNS Zone Transfer Results for {domain}:", 'cyan'))
+                print(response.decode())
+    except Exception as e:
+        print(colored(f"Error: {e}", 'red'))
+    pause()
+
+def ssl_certificate_lookup():
+    hostname = input("Enter hostname: ")
+    context = ssl.create_default_context()
+    with socket.create_connection((hostname, 443)) as sock:
+        with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+            cert = ssock.getpeercert()
+            print(colored(f"SSL Certificate for {hostname}:", 'cyan'))
+            for key, value in cert.items():
+                print(f"  - {key}: {value}")
+    pause()
+
+def ip_lookup_menu():
+    while True:
+        gradient_menu("IP Lookup & Analysis", [
+            "Advanced IP Lookup",
+            "IP Reputation Check",
+            "Port Scanner",
+            "IP to Domain",
+            "Reverse IP Lookup",
+            "MAC Address Lookup",
+            "Back to Main Menu"
+        ])
+        choice = input(colored("Enter your choice: ", 'yellow'))
+        
+        if choice == '1':
+            advanced_ip_lookup()
+        elif choice == '2':
+            ip_reputation_check()
+        elif choice == '3':
+            port_scanner()
+        elif choice == '4':
+            ip_to_domain()
+        elif choice == '5':
+            reverse_ip_lookup()
+        elif choice == '6':
+            mac_address_lookup()
+        elif choice == '7':
+            break
+        else:
+            print(colored("Invalid choice. Please try again.", 'red'))
+        print("\n")
+
+def password_security_menu():
+    while True:
+        gradient_menu("Password & Security", [
+            "Password Generation",
+            "Password Breach Check",
+            "Password History Check",
+            "Password Reuse Check",
+            "Password Strength Check",
+            "Back to Main Menu"
+        ])
+        choice = input(colored("Enter your choice: ", 'yellow'))
+        
+        if choice == '1':
+            password_generation()
+        elif choice == '2':
+            password_breach_check()
+        elif choice == '3':
+            password_history_check()
+        elif choice == '4':
+            password_reuse_check()
+        elif choice == '5':
+            password_strength_check()
+        elif choice == '6':
+            break
+        else:
+            print(colored("Invalid choice. Please try again.", 'red'))
+        print("\n")
+
+def domain_dns_menu():
+    while True:
+        gradient_menu("Domain & DNS", [
+            "Domain Lookup",
+            "DNS Record Lookup",
+            "DNS Zone Transfer",
+            "SSL Certificate Lookup",
+            "Back to Main Menu"
+        ])
+        choice = input(colored("Enter your choice: ", 'yellow'))
+        
+        if choice == '1':
+            domain_lookup()
+        elif choice == '2':
+            dns_record_lookup()
+        elif choice == '3':
+            dns_zone_transfer()
+        elif choice == '4':
+            ssl_certificate_lookup()
+        elif choice == '5':
+            break
+        else:
+            print(colored("Invalid choice. Please try again.", 'red'))
+        print("\n")
+
+def main_menu():
+    while True:
+        gradient_header()
+        gradient_menu("Menu Options", [
+            "IP Lookup & Analysis",
+            "Password & Security",
+            "Domain & DNS",
+            "Exit"
+        ])
+        choice = input(colored("Enter your choice: ", 'yellow'))
+        
+        if choice == '1':
+            ip_lookup_menu()
+        elif choice == '2':
+            password_security_menu()
+        elif choice == '3':
+            domain_dns_menu()
+        elif choice == '4':
+            print(colored("Exiting...", 'red'))
+            break
+        else:
+            print(colored("Invalid choice. Please try again.", 'red'))
+        print("\n")
+
+if __name__ == "__main__":
+    if check_key():
+        main_menu()
+    else:
+        print(colored("Exiting due to invalid access key.", 'red'))
