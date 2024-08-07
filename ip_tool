@@ -47,7 +47,13 @@ def gradient_header():
                                                                                                 | $$         
                                                                                                 |__/         
     """
+    credits = """
+    Credits:
+    0x45_1234 on Discord
+    restock.lol
+    """
     print(colored(header, 'cyan'))
+    print(colored(credits, 'magenta'))
 
 def gradient_menu(title, options):
     print(colored(f"\n{title}", 'blue'))
