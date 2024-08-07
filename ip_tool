@@ -3,7 +3,7 @@ import requests
 import socket
 import ssl
 import dns.resolver
-import whois
+import pywhois as whois
 import string
 import hashlib
 import re
