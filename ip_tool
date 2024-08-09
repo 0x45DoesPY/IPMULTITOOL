@@ -40,7 +40,7 @@ VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin', 'Cortana.54': 'Midoriya', '
 HWID_DATABASE = {
     '0x45_1234': '28C94414-E468-8617-AA84-2CF05DD55C52',
     'admin': 'YOUR_ACTUAL_HARDWARE_ID',  # Replace this with the actual HWID for 'admin'
-    'Cortana.54': 'F82A19C1-6C8A-B71B-A2EA-00D861FD8D65'
+    'Cortana.54': 'F82A19C1-6C8A-B71B-A2EA-00D861FD8D65',
     'linusisaskid': '26A717ED-802C-D647-A705-FA61C1D03AE9' 
 }
 PASSWORD_HISTORY = set()
