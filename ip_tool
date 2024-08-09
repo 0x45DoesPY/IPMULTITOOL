@@ -36,7 +36,7 @@ def get_hwid():
         return None
 
 # Define valid access keys and password history
-VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin', 'Cortana.54': 'Midoriya'}
+VALID_KEYS = {'0x45_1234': 'User', 'admin': 'admin', 'Cortana.54': 'Midoriya', 'linusisaskid': 'dragonking'}
 HWID_DATABASE = {
     '0x45_1234': '28C94414-E468-8617-AA84-2CF05DD55C52',
     'admin': 'YOUR_ACTUAL_HARDWARE_ID',  # Replace this with the actual HWID for 'admin'
