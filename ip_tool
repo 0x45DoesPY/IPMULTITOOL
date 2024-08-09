@@ -223,17 +223,11 @@ def password_strength_check():
 
 def domain_lookup():
     domain = input("Enter domain name: ")
-    try:
-        domain_info = whois.whois(domain)
-        print(Fore.CYAN + f"Domain Lookup Results for {domain}:" + Style.RESET_ALL)
-        print(f"Domain Name: {domain_info.domain_name}")
-        print(f"Registrar: {domain_info.registrar}")
-        print(f"Creation Date: {domain_info.creation_date}")
-        print(f"Expiration Date: {domain_info.expiration_date}")
-        print(f"Name Servers: {', '.join(domain_info.name_servers)}")
-    except Exception as e:
-        print(Fore.RED + f"Error: {e}" + Style.RESET_ALL)
-    pause()
+    resolver = dns.resolver.Resolver()
+    answers = resolver.query(domain, 'A')
+    for rdata in answers:
+        print(f"IP address: {rdata.address}")
+
 
 def dns_record_lookup():
     domain = input("Enter domain name: ")
